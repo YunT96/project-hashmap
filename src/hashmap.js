@@ -1,7 +1,11 @@
+import Node from "./node.js";
+
 export default class HashMap {
-  constructor() {
-    this.bucketSize = 16;
-    this.buckets = new Array(this.bucketSize);
+  constructor(initialCapacity = 16, loadFactor = 0.75) {
+    this.buckets = new Array(initialCapacity).fill(null);
+    this.size = 0;
+    this.loadFactor = loadFactor;
+    this.threshold = Math.floor(initialCapacity * loadFactor);
   }
 
   hash(key) {
@@ -9,64 +13,122 @@ export default class HashMap {
     const primeNumber = 31;
     for (let i = 0; i < key.length; i++) {
       hashCode = primeNumber * hashCode + key.charCodeAt(i);
-      hashCode %= this.bucketSize; // reduce to value between 0 and bucketSize - 1
     }
-    console.log(`Hashcode for ${key} is ${hashCode}`);
-    return hashCode;
+    return hashCode % this.buckets.length;
   }
 
   set(key, value) {
-    const index = this.hash(key);
-    if (index < 0 || index >= this.buckets.length) {
-      throw new Error("Trying to access index out of bound");
+    // Check if resizing is necessary before adding a new element
+    if (this.size >= this.threshold) {
+      this.resize();
     }
-    this.buckets[index] = [key, value];
+
+    const index = this.hash(key);
+    if (!this.buckets[index]) {
+      // if bucket is empty, create new node
+      this.buckets[index] = new Node(key, value);
+      this.size++;
+    } else {
+      let current = this.buckets[index];
+      // loop through bucket to find matching key
+      while (current) {
+        if (current.key === key) {
+          // if key is found, update value and return
+          current.value = value;
+          return;
+        }
+        if (!current.next) {
+          // if key is not found at the end, add new node
+          current.next = new Node(key, value);
+          this.size++;
+          return;
+        }
+        current = current.next;
+      }
+    }
   }
 
   get(key) {
+    // calculate the index location
     const index = this.hash(key);
-    if (index < 0 || index >= this.buckets.length) {
-      throw new Error("Trying to access index out of bound");
+    let current = this.buckets[index];
+
+    // loop through bucket to find matching key
+    while (current) {
+      if (current.key === key) {
+        return current.value;
+      }
+      current = current.next;
     }
-    if (this.buckets[index] === undefined) {
-      return null;
+    return null;
+  }
+
+  has(key) {
+    const index = this.hash(key);
+    let current = this.buckets[index];
+    while (current) {
+      if (current.key === key) {
+        return true;
+      }
+      current = current.next;
     }
-    return this.buckets[index][1];
+    return false;
   }
 
   remove(key) {
     const index = this.hash(key);
+    let current = this.buckets[index];
+    let prev = null;
 
-    if (index < 0 || index >= this.buckets.length) {
-      throw new Error("Trying to access index out of bound");
+    while (current) {
+      if (current.key === key) {
+        if (prev) {
+          // if not the first node, set the previous node's next to the current node's next
+          prev.next = current.next;
+        } else {
+          // if the first node, update the bucket to point to the current node's next
+          this.buckets[index] = current.next;
+        }
+        this.size--;
+        return true;
+      }
+      prev = current;
+      current = current.next;
     }
-    if (this.buckets[index] !== undefined) {
-      delete this.buckets[index];
-      return true;
-    }
-
     return false;
   }
 
-  length() {
-    let count = 0;
-    for (let i = 0; i < this.buckets.length; i++) {
-      if (this.buckets[i]) {
-        count += this.buckets[i].length;
+  // New method to resize the HashMap when it reaches the threshold
+  resize() {
+    const oldBuckets = this.buckets;
+    this.buckets = new Array(this.buckets.length * 2).fill(null);
+    this.size = 0;
+    this.threshold = Math.floor(this.buckets.length * this.loadFactor);
+    for (let i = 0; i < oldBuckets.length; i++) {
+      let current = oldBuckets[i];
+      while (current) {
+        this.set(current.key, current.value);
+        current = current.next;
       }
     }
-    return count;
+  }
+
+  length() {
+    return this.size;
   }
 
   clear() {
-    this.buckets = new Array(this.bucketSize).fill(null);
+    this.buckets = new Array(this.buckets.length).fill(null);
+    this.size = 0;
   }
 
   keys() {
     const keys = [];
     for (let i = 0; i < this.buckets.length; i++) {
-      if (this.buckets[i] !== undefined) {
-        keys.push(this.buckets[i][0]);
+      let current = this.buckets[i];
+      while (current) {
+        keys.push(current.key);
+        current = current.next;
       }
     }
     return keys;
@@ -75,8 +137,10 @@ export default class HashMap {
   values() {
     const values = [];
     for (let i = 0; i < this.buckets.length; i++) {
-      if (this.buckets[i] !== undefined) {
-        values.push(this.buckets[i][1]);
+      let current = this.buckets[i];
+      while (current) {
+        values.push(current.value);
+        current = current.next;
       }
     }
     return values;
@@ -85,10 +149,17 @@ export default class HashMap {
   entries() {
     const entries = [];
     for (let i = 0; i < this.buckets.length; i++) {
-      if (this.buckets[i] !== undefined) {
-        entries.push(this.buckets[i]);
+      let current = this.buckets[i];
+      while (current) {
+        entries.push([current.key, current.value]);
+        current = current.next;
       }
     }
     return entries;
+  }
+
+  // New method to get the current load factor
+  getLoadFactor() {
+    return this.size / this.buckets.length;
   }
 }

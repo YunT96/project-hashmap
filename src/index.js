@@ -18,6 +18,18 @@ test.set("kite", "pink");
 test.set("lion", "golden");
 
 console.log(test);
-console.log(test.keys());
-console.log(test.values());
+console.log(test.getLoadFactor());
+
+// expand the hashmap by exceeding the threshold
+test.set("moon", "silver");
+
+console.log(test);
+console.log(test.getLoadFactor());
+console.log(test.has("apple"));
+
+test.set("apple", "green");
+
+console.log(test);
+console.log(test.getLoadFactor());
+
 console.log(test.entries());
