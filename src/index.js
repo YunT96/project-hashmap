@@ -2,17 +2,22 @@ import "./styles.css";
 
 import HashMap from "./hashmap";
 
-const map = new HashMap();
+const test = new HashMap();
 
-map.set("carlos", "fenandez");
-map.set("carla", "hernandez");
+test.set("apple", "red");
+test.set("banana", "yellow");
+test.set("carrot", "orange");
+test.set("dog", "brown");
+test.set("elephant", "gray");
+test.set("frog", "green");
+test.set("grape", "purple");
+test.set("hat", "black");
+test.set("ice cream", "white");
+test.set("jacket", "blue");
+test.set("kite", "pink");
+test.set("lion", "golden");
 
-console.log(map);
-console.log(`search for carla: ${map.get("carla")}`);
-console.log(`search for foo: ${map.get("foo")}`);
-
-console.log(`remove carla: ${map.remove("carla")}`);
-
-console.log(map);
-
-console.log(`length: ${map.length()}`);
+console.log(test);
+console.log(test.keys());
+console.log(test.values());
+console.log(test.entries());
